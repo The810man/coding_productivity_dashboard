@@ -1,4 +1,4 @@
-package com.example.coding_productivity_dashboard
+package com.example.coproda
 
 import io.flutter.embedding.android.FlutterActivity
 

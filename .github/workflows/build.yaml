@@ -61,7 +61,7 @@ jobs:
           [Desktop Entry]
           Version=1.0
           Type=Application
-          Name=Git Coproda
+          Name=coproda
           Comment=Git Status Tool
           Exec=/usr/bin/$APP_NAME
           Icon=$APP_NAME
@@ -78,7 +78,7 @@ jobs:
           Version: $VERSION
           Architecture: amd64
           Maintainer: Dein Name <email@example.com>
-          Description: Git Coproda App
+          Description: coproda App
           Depends: libgtk-3-0, libstdc++6
           EOF
 

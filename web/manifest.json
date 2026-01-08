@@ -1,6 +1,6 @@
 {
-    "name": "coding_productivity_dashboard",
-    "short_name": "coding_productivity_dashboard",
+    "name": "coproda",
+    "short_name": "coproda",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",
