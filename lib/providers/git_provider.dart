@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import '../models/git_data.dart';
 import 'settings_provider.dart';
 
@@ -64,10 +65,30 @@ extension StreamStartWith<T> on Stream<T> {
   }
 }
 
+// Hilfsfunktion: Findet den Pfad NEBEN der App-Datei
+String _getExecutableDir() {
+  // Holt den Pfad der laufenden Binary (z.B. /usr/bin/myapp)
+  final exePath = Platform.resolvedExecutable;
+  // Gibt den Ordner zurück (z.B. /usr/bin)
+  return p.dirname(exePath);
+}
+
 Future<GitReport> _runScript(bool useSmartFilter) async {
   try {
-    if (!await File(kScriptFileName).exists()) {
-      // HIER WAR DER FEHLER: heatmap: {} fehlte
+    final dir = _getExecutableDir();
+    final scriptPath = p.join(
+      dir,
+      kScriptFileName,
+    ); // Absoluter Pfad zum Skript
+    final configPath = p.join(
+      dir,
+      kConfigFileName,
+    ); // Absoluter Pfad zur Config
+
+    // Debug Print für dich (falls du die App im Terminal startest)
+    print("DEBUG: Suche Script in: $scriptPath");
+
+    if (!await File(scriptPath).exists()) {
       return GitReport(
         date: "Script Missing",
         repos: {},
@@ -77,9 +98,11 @@ Future<GitReport> _runScript(bool useSmartFilter) async {
     }
 
     final String thresholdArg = useSmartFilter ? "600" : "0";
+
+    // WICHTIG: Wir übergeben jetzt absolute Pfade an 'sh'
     final result = await Process.run('sh', [
-      kScriptFileName,
-      kConfigFileName,
+      scriptPath,
+      configPath,
       thresholdArg,
     ]);
 
