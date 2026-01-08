@@ -10,11 +10,9 @@ class StatChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Max Value für Y-Achse berechnen (damit der Graph nicht clippt)
     final double maxY =
         (stats.added > stats.deleted ? stats.added : stats.deleted).toDouble() *
         1.2;
-    // Fallback falls alles 0 ist
     final double safeMaxY = maxY == 0 ? 10 : maxY;
 
     return AspectRatio(

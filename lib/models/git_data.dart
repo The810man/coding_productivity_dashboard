@@ -8,7 +8,6 @@ class GitStat {
   factory GitStat.zero() => GitStat(files: 0, added: 0, deleted: 0);
 
   factory GitStat.fromParts(List<String> parts) {
-    // Erwartet parts ab Index 3: [files, added, deleted]
     return GitStat(
       files: int.tryParse(parts[3]) ?? 0,
       added: int.tryParse(parts[4]) ?? 0,
@@ -38,7 +37,6 @@ class GitReport {
     final Map<String, RepoData> repos = {};
     final Map<String, GitStat> totals = {};
 
-    // Helper um Repos sicher zu holen oder zu erstellen
     RepoData getRepo(String name) {
       if (!repos.containsKey(name)) {
         repos[name] = RepoData(name: name, stats: {}, branches: {});
@@ -63,7 +61,6 @@ class GitReport {
       } else if (type == 'BRANCHES') {
         final name = parts[1];
         final period = parts[2];
-        // Branches sind komma-getrennt in parts[3]
         if (parts.length > 3) {
           final branchList = parts[3]
               .split(',')

@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_acrylic/flutter_acrylic.dart'; // WICHTIG
+import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'providers/git_provider.dart';
 import 'models/git_data.dart';
-import 'widgets/modern_widgets.dart'; // Unsere neuen Widgets
+import 'widgets/modern_widgets.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Acrylic Initialisierung (Nur Desktop)
+  // Acrylic Initialisierung (just Desktop)
   try {
     await Window.initialize();
     await Window.setEffect(
-      effect: WindowEffect.acrylic, // Oder WindowEffect.mica auf Windows 11
+      effect: WindowEffect.acrylic, // Or WindowEffect.mica on Windows 11
       color: const Color.fromARGB(232, 0, 0, 0), // Hex CC = 80% Opacity
       dark: true,
     );
@@ -34,9 +34,7 @@ class ModernApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'DevHUD',
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.transparent.withAlpha(
-          150,
-        ), // WICHTIG für Acrylic
+        scaffoldBackgroundColor: Colors.transparent.withAlpha(150),
         textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
         colorScheme: const ColorScheme.dark(
           primary: AppColors.neonBlue,
@@ -64,10 +62,7 @@ class ModernDashboard extends HookConsumerWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0x44000000), // Sehr dunkel
-                  Color(0x881E1E1E),
-                ],
+                colors: [Color(0x44000000), Color(0x881E1E1E)],
               ),
             ),
           ),
@@ -220,7 +215,6 @@ class ModernDashboard extends HookConsumerWidget {
     final today = repo.stats['TODAY'] ?? GitStat.zero();
     final branches = repo.branches['TODAY'] ?? [];
 
-    // Nur anzeigen, wenn heute was passiert ist (oder änderbar nach Geschmack)
     if (today.files == 0 && branches.isEmpty) return const SizedBox.shrink();
 
     return Container(
@@ -299,7 +293,6 @@ class ModernDashboard extends HookConsumerWidget {
   }
 
   void _showConfig(BuildContext context, WidgetRef ref) {
-    // Einfacher Config Dialog (kannst du auch stylen)
     final paths = ref.read(repoConfigProvider);
     showDialog(
       context: context,

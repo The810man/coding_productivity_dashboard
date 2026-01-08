@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/git_data.dart';
 
-// Farben
 class AppColors {
   static const neonGreen = Color(0xFF00FF9D);
   static const neonRed = Color(0xFFFF0055);

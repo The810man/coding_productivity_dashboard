@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/git_data.dart';
 
-// Pfad zur repos.conf (im gleichen Ordner wie die App oder das Skript)
 const String kConfigFileName = 'repos.conf';
 const String kScriptFileName = 'git_status.sh';
 
@@ -47,18 +46,15 @@ final repoConfigProvider = NotifierProvider<RepoConfigNotifier, List<String>>(
   RepoConfigNotifier.new,
 );
 
-// 2. Stats Provider (Führt Skript aus & refreshed alle 10 min)
 final gitStatsProvider = StreamProvider<GitReport>((ref) {
-  // Wir hören auf Config Änderungen, um sofort neu zu laden
   ref.watch(repoConfigProvider);
 
-  // Timer Stream: Startet sofort, dann alle 10 Minuten
-  return Stream.periodic(const Duration(minutes: 10), (_) => _runScript())
-      .asyncMap((event) async => await event)
-      .startWith(_runScript()); // Sofortiger Start beim Init
+  return Stream.periodic(
+    const Duration(minutes: 10),
+    (_) => _runScript(),
+  ).asyncMap((event) async => await event).startWith(_runScript());
 });
 
-// Extension für startWith (einfacher Hack für Streams)
 extension StreamStartWith<T> on Stream<T> {
   Stream<T> startWith(Future<T> initial) async* {
     yield await initial;
@@ -66,12 +62,9 @@ extension StreamStartWith<T> on Stream<T> {
   }
 }
 
-// Hilfsfunktion: Skript ausführen
 Future<GitReport> _runScript() async {
   try {
-    // Prüfen ob Skript existiert
     if (!await File(kScriptFileName).exists()) {
-      // Dummy Daten falls Skript fehlt (zum Testen der UI)
       return GitReport(date: "Script Missing", repos: {}, totals: {});
     }
 
@@ -82,7 +75,6 @@ Future<GitReport> _runScript() async {
       throw Exception("Script failed");
     }
 
-    // Debug Output im Terminal
     if (result.stderr.toString().isNotEmpty) {
       print("DEBUG: ${result.stderr}");
     }
