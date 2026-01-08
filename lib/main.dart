@@ -2,42 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_acrylic/flutter_acrylic.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:file_picker/file_picker.dart';
 import 'providers/git_provider.dart';
+import 'providers/settings_provider.dart';
 import 'models/git_data.dart';
 import 'widgets/modern_widgets.dart';
+import 'widgets/settings_dialog.dart';
+import 'widgets/heatmap_widget.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Acrylic Initialisierung (just Desktop)
   try {
     await Window.initialize();
     await Window.setEffect(
-      effect: WindowEffect.acrylic, // Or WindowEffect.mica on Windows 11
-      color: const Color.fromARGB(232, 0, 0, 0), // Hex CC = 80% Opacity
+      effect: WindowEffect.acrylic,
+      color: const Color(0xCC000000),
       dark: true,
     );
-  } catch (e) {
-    print("Acrylic not supported or not on desktop: $e");
-  }
+  } catch (_) {}
 
   runApp(const ProviderScope(child: ModernApp()));
 }
 
-class ModernApp extends StatelessWidget {
+class ModernApp extends ConsumerWidget {
   const ModernApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(settingsProvider);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'DevHUD',
       theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: Colors.transparent.withAlpha(150),
-        textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme),
-        colorScheme: const ColorScheme.dark(
-          primary: AppColors.neonBlue,
+        scaffoldBackgroundColor: Colors.transparent,
+        textTheme: GoogleFonts.robotoMonoTextTheme(
+          ThemeData.dark().textTheme,
+        ), // Sicherer Font
+        colorScheme: ColorScheme.dark(
+          primary: theme.primaryColor,
           surface: Colors.transparent,
         ),
       ),
@@ -52,38 +54,39 @@ class ModernDashboard extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportAsync = ref.watch(gitStatsProvider);
+    final theme = ref.watch(settingsProvider);
 
     return Scaffold(
       body: Stack(
         children: [
-          // Background Gradient (subtil)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0x44000000), Color(0x881E1E1E)],
+                colors: [
+                  Color.fromARGB(209, 0, 0, 0),
+                  Color.fromARGB(188, 30, 30, 30),
+                ],
               ),
             ),
           ),
-
-          // Main Content
           SafeArea(
             child: Column(
               children: [
                 _buildHeader(context, ref),
                 Expanded(
                   child: reportAsync.when(
-                    data: (report) => _buildContent(report),
-                    loading: () => const Center(
+                    data: (report) => _buildContent(report, theme),
+                    loading: () => Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.neonGreen,
+                        color: theme.primaryColor,
                       ),
                     ),
                     error: (err, _) => Center(
                       child: Text(
                         "ERR: $err",
-                        style: const TextStyle(color: AppColors.neonRed),
+                        style: TextStyle(color: AppColors.neonRed),
                       ),
                     ),
                   ),
@@ -96,8 +99,8 @@ class ModernDashboard extends HookConsumerWidget {
     );
   }
 
-  // Header Bar
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(settingsProvider);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       child: Row(
@@ -105,10 +108,10 @@ class ModernDashboard extends HookConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.neonGreen.withOpacity(0.2),
+              color: theme.primaryColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.terminal, color: AppColors.neonGreen),
+            child: Icon(Icons.terminal, color: theme.primaryColor),
           ),
           const SizedBox(width: 15),
           Column(
@@ -116,7 +119,7 @@ class ModernDashboard extends HookConsumerWidget {
             children: [
               Text(
                 "DEV.HUD_V1",
-                style: GoogleFonts.jetBrainsMono(
+                style: GoogleFonts.robotoMono(
                   fontSize: 10,
                   color: Colors.white38,
                   letterSpacing: 2,
@@ -124,7 +127,7 @@ class ModernDashboard extends HookConsumerWidget {
               ),
               Text(
                 "DAILY REPORT",
-                style: GoogleFonts.inter(
+                style: GoogleFonts.robotoMono(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -134,11 +137,14 @@ class ModernDashboard extends HookConsumerWidget {
           ),
           const Spacer(),
           IconButton(
-            icon: const Icon(Icons.folder_open, color: Colors.white70),
-            onPressed: () => _showConfig(context, ref),
+            icon: const Icon(Icons.settings, color: Colors.white70),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.refresh, color: AppColors.neonBlue),
+            icon: Icon(Icons.refresh, color: theme.primaryColor),
             onPressed: () => ref.invalidate(gitStatsProvider),
           ),
         ],
@@ -146,7 +152,7 @@ class ModernDashboard extends HookConsumerWidget {
     );
   }
 
-  Widget _buildContent(GitReport report) {
+  Widget _buildContent(GitReport report, AppTheme theme) {
     if (report.repos.isEmpty) {
       return Center(
         child: Column(
@@ -156,7 +162,7 @@ class ModernDashboard extends HookConsumerWidget {
             const SizedBox(height: 10),
             Text(
               "NO REPOSITORIES LINKED",
-              style: GoogleFonts.jetBrainsMono(color: Colors.white54),
+              style: GoogleFonts.robotoMono(color: Colors.white54),
             ),
           ],
         ),
@@ -172,46 +178,53 @@ class ModernDashboard extends HookConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. STATS ROW (Pie Charts)
+          if (theme.showPieCharts)
+            GlassCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CodePieChart(stats: today, title: "Today"),
+                  ),
+                  Container(width: 1, height: 80, color: Colors.white10),
+                  Expanded(
+                    child: CodePieChart(stats: week, title: "Week"),
+                  ),
+                  Container(width: 1, height: 80, color: Colors.white10),
+                  Expanded(
+                    child: CodePieChart(stats: month, title: "Month"),
+                  ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 20),
           GlassCard(
-            child: Row(
-              children: [
-                Expanded(
-                  child: CodePieChart(stats: today, title: "Today"),
-                ),
-                Container(width: 1, height: 80, color: Colors.white10),
-                Expanded(
-                  child: CodePieChart(stats: week, title: "Week"),
-                ),
-                Container(width: 1, height: 80, color: Colors.white10),
-                Expanded(
-                  child: CodePieChart(stats: month, title: "Month"),
-                ),
-              ],
+            padding: const EdgeInsets.all(15),
+            child: ContributionHeatmap(
+              data: report.heatmap,
+              primaryColor: theme.primaryColor,
             ),
           ),
 
           const SizedBox(height: 30),
           Text(
             "ACTIVE_REPOS",
-            style: GoogleFonts.jetBrainsMono(
-              color: AppColors.neonBlue,
+            style: GoogleFonts.robotoMono(
+              color: theme.primaryColor,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
           ),
           const SizedBox(height: 15),
 
-          // 2. REPO LIST
-          ...report.repos.values.map((repo) => _buildRepoTile(repo)),
-
+          ...report.repos.values.map((repo) => _buildRepoTile(repo, theme)),
           const SizedBox(height: 50),
         ],
       ),
     );
   }
 
-  Widget _buildRepoTile(RepoData repo) {
+  Widget _buildRepoTile(RepoData repo, AppTheme theme) {
     final today = repo.stats['TODAY'] ?? GitStat.zero();
     final branches = repo.branches['TODAY'] ?? [];
 
@@ -230,7 +243,7 @@ class ModernDashboard extends HookConsumerWidget {
                 Expanded(
                   child: Text(
                     repo.name,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.robotoMono(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -241,7 +254,7 @@ class ModernDashboard extends HookConsumerWidget {
                   children: [
                     Text(
                       "+${today.added}",
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.robotoMono(
                         color: AppColors.neonGreen,
                         fontSize: 13,
                       ),
@@ -249,7 +262,7 @@ class ModernDashboard extends HookConsumerWidget {
                     const SizedBox(width: 10),
                     Text(
                       "-${today.deleted}",
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.robotoMono(
                         color: AppColors.neonRed,
                         fontSize: 13,
                       ),
@@ -277,9 +290,9 @@ class ModernDashboard extends HookConsumerWidget {
                         ),
                         child: Text(
                           b,
-                          style: GoogleFonts.jetBrainsMono(
+                          style: GoogleFonts.robotoMono(
                             fontSize: 10,
-                            color: AppColors.neonBlue,
+                            color: theme.primaryColor,
                           ),
                         ),
                       ),
@@ -287,62 +300,6 @@ class ModernDashboard extends HookConsumerWidget {
                     .toList(),
               ),
           ],
-        ),
-      ),
-    );
-  }
-
-  void _showConfig(BuildContext context, WidgetRef ref) {
-    final paths = ref.read(repoConfigProvider);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: Text(
-          "Manage Repos",
-          style: GoogleFonts.jetBrainsMono(color: Colors.white),
-        ),
-        content: SizedBox(
-          width: 400,
-          child: ListView(
-            shrinkWrap: true,
-            children: [
-              ...paths.map(
-                (p) => ListTile(
-                  title: Text(
-                    p,
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.neonRed),
-                    onPressed: () {
-                      ref.read(repoConfigProvider.notifier).removePath(p);
-                      Navigator.pop(ctx);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.neonBlue,
-                  foregroundColor: Colors.black,
-                ),
-                icon: const Icon(Icons.add),
-                label: const Text("ADD FOLDER"),
-                onPressed: () async {
-                  String? selectedDirectory = await FilePicker.platform
-                      .getDirectoryPath();
-                  if (selectedDirectory != null) {
-                    ref
-                        .read(repoConfigProvider.notifier)
-                        .addPath(selectedDirectory);
-                  }
-                  if (context.mounted) Navigator.pop(ctx);
-                },
-              ),
-            ],
-          ),
         ),
       ),
     );

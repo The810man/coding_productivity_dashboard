@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/git_data.dart';
+import 'settings_provider.dart';
 
 const String kConfigFileName = 'repos.conf';
 const String kScriptFileName = 'git_status.sh';
 
-// 1. Config Provider (Liest/Schreibt repos.conf)
 class RepoConfigNotifier extends Notifier<List<String>> {
   @override
   List<String> build() {
@@ -18,7 +18,6 @@ class RepoConfigNotifier extends Notifier<List<String>> {
     final file = File(kConfigFileName);
     if (await file.exists()) {
       final lines = await file.readAsLines();
-      // Filter Kommentare und leere Zeilen
       state = lines
           .where((l) => l.trim().isNotEmpty && !l.startsWith('#'))
           .toList();
@@ -48,11 +47,14 @@ final repoConfigProvider = NotifierProvider<RepoConfigNotifier, List<String>>(
 
 final gitStatsProvider = StreamProvider<GitReport>((ref) {
   ref.watch(repoConfigProvider);
+  final settings = ref.watch(settingsProvider);
 
   return Stream.periodic(
-    const Duration(minutes: 10),
-    (_) => _runScript(),
-  ).asyncMap((event) async => await event).startWith(_runScript());
+        const Duration(minutes: 10),
+        (_) => _runScript(settings.smartFiltering),
+      )
+      .asyncMap((event) async => await event)
+      .startWith(_runScript(settings.smartFiltering));
 });
 
 extension StreamStartWith<T> on Stream<T> {
@@ -62,21 +64,28 @@ extension StreamStartWith<T> on Stream<T> {
   }
 }
 
-Future<GitReport> _runScript() async {
+Future<GitReport> _runScript(bool useSmartFilter) async {
   try {
     if (!await File(kScriptFileName).exists()) {
-      return GitReport(date: "Script Missing", repos: {}, totals: {});
+      // HIER WAR DER FEHLER: heatmap: {} fehlte
+      return GitReport(
+        date: "Script Missing",
+        repos: {},
+        totals: {},
+        heatmap: {},
+      );
     }
 
-    final result = await Process.run('sh', [kScriptFileName]);
+    final String thresholdArg = useSmartFilter ? "600" : "0";
+    final result = await Process.run('sh', [
+      kScriptFileName,
+      kConfigFileName,
+      thresholdArg,
+    ]);
 
     if (result.exitCode != 0) {
       print("Script Error: ${result.stderr}");
       throw Exception("Script failed");
-    }
-
-    if (result.stderr.toString().isNotEmpty) {
-      print("DEBUG: ${result.stderr}");
     }
 
     return GitReport.parse(result.stdout.toString());

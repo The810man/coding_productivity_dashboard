@@ -18,7 +18,7 @@ class GitStat {
 
 class RepoData {
   final String name;
-  final Map<String, GitStat> stats; // Key: 'TODAY', 'THIS_WEEK' etc.
+  final Map<String, GitStat> stats;
   final Map<String, List<String>> branches;
 
   RepoData({required this.name, required this.stats, required this.branches});
@@ -28,14 +28,20 @@ class GitReport {
   final String date;
   final Map<String, RepoData> repos;
   final Map<String, GitStat> totals;
+  final Map<DateTime, int> heatmap; // <-- NEU
 
-  GitReport({required this.date, required this.repos, required this.totals});
+  GitReport({
+    required this.date,
+    required this.repos,
+    required this.totals,
+    required this.heatmap, // <-- NEU
+  });
 
-  // Parsing Logic
   factory GitReport.parse(String rawOutput) {
     String date = "";
     final Map<String, RepoData> repos = {};
     final Map<String, GitStat> totals = {};
+    final Map<DateTime, int> heatmap = {};
 
     RepoData getRepo(String name) {
       if (!repos.containsKey(name)) {
@@ -48,9 +54,20 @@ class GitReport {
     for (var line in lines) {
       if (line.isEmpty) continue;
       final parts = line.split('|');
-      if (parts.length < 3) continue;
 
-      final type = parts[0]; // META, REPO, BRANCHES, TOTAL
+      // Heatmap Parsing
+      if (parts[0] == 'HEATMAP_TOTAL' && parts.length >= 3) {
+        final dateStr = parts[1];
+        final count = int.tryParse(parts[2]) ?? 0;
+        try {
+          final dt = DateTime.parse(dateStr);
+          heatmap[DateTime(dt.year, dt.month, dt.day)] = count;
+        } catch (_) {}
+        continue;
+      }
+
+      if (parts.length < 3) continue;
+      final type = parts[0];
 
       if (type == 'META' && parts[1] == 'DATE') {
         date = parts[2];
@@ -62,11 +79,10 @@ class GitReport {
         final name = parts[1];
         final period = parts[2];
         if (parts.length > 3) {
-          final branchList = parts[3]
+          getRepo(name).branches[period] = parts[3]
               .split(',')
               .where((s) => s.isNotEmpty)
               .toList();
-          getRepo(name).branches[period] = branchList;
         }
       } else if (type == 'TOTAL') {
         final period = parts[2];
@@ -74,6 +90,11 @@ class GitReport {
       }
     }
 
-    return GitReport(date: date, repos: repos, totals: totals);
+    return GitReport(
+      date: date,
+      repos: repos,
+      totals: totals,
+      heatmap: heatmap,
+    );
   }
 }

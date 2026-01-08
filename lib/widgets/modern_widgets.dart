@@ -6,12 +6,8 @@ import '../models/git_data.dart';
 class AppColors {
   static const neonGreen = Color(0xFF00FF9D);
   static const neonRed = Color(0xFFFF0055);
-  static const neonBlue = Color(0xFF00E5FF);
-  static const darkBg = Color(0xFF121212);
-  static const glassBorder = Colors.white10;
 }
 
-// 1. Reusable Glass Card
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets padding;
@@ -31,9 +27,7 @@ class GlassCard extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(
-            0.6,
-          ), // Dunkler Halbtransparenter Hintergrund
+          color: Colors.black.withOpacity(0.6),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
           boxShadow: [
@@ -50,7 +44,6 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-// 2. Modern Pie Chart
 class CodePieChart extends StatelessWidget {
   final GitStat stats;
   final String title;
@@ -66,7 +59,8 @@ class CodePieChart extends StatelessWidget {
       children: [
         Text(
           title.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
+          style: GoogleFonts.robotoMono(
+            // robotoMono ist sicherer
             fontSize: 12,
             color: Colors.white54,
             fontWeight: FontWeight.bold,
@@ -96,7 +90,7 @@ class CodePieChart extends StatelessWidget {
                             color: AppColors.neonGreen,
                             value: stats.added.toDouble(),
                             title: "${stats.added}",
-                            titleStyle: GoogleFonts.jetBrainsMono(
+                            titleStyle: GoogleFonts.robotoMono(
                               fontSize: 10,
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
@@ -108,7 +102,7 @@ class CodePieChart extends StatelessWidget {
                             color: AppColors.neonRed,
                             value: stats.deleted.toDouble(),
                             title: "${stats.deleted}",
-                            titleStyle: GoogleFonts.jetBrainsMono(
+                            titleStyle: GoogleFonts.robotoMono(
                               fontSize: 10,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -119,14 +113,13 @@ class CodePieChart extends StatelessWidget {
                         ],
                 ),
               ),
-              // Center Text
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       isZero ? "Zzz" : "$total",
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.robotoMono(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -134,7 +127,7 @@ class CodePieChart extends StatelessWidget {
                     ),
                     Text(
                       "LINES",
-                      style: GoogleFonts.jetBrainsMono(
+                      style: GoogleFonts.robotoMono(
                         color: Colors.white38,
                         fontSize: 8,
                       ),
