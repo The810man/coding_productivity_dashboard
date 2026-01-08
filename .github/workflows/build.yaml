@@ -44,8 +44,8 @@ jobs:
   build-linux-deb:
     runs-on: ubuntu-latest
     env:
-      APP_NAME: "dein_app_name"  # <--- HIER ANPASSEN (kleingeschrieben, keine Leerzeichen)
-      VERSION: "1.0.0"           # <--- HIER ANPASSEN (oder dynamisch setzen)
+      APP_NAME: "git-coproda"  
+      VERSION: "1.0.0"          
     
     steps:
       - uses: actions/checkout@v4
